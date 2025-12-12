@@ -20,7 +20,11 @@ export default defineConfig({
     port: 80,
     strictPort: true,
     host: true,
-    origin: "http://0.0.0.0:80",
+    hmr: {
+      protocol: "ws",
+      host: "localhost",
+      clientPort: 80,
+    },
     watch: {
       usePolling: true,
     },
