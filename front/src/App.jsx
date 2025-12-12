@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import Login from "./pages/Login.jsx";
@@ -29,13 +29,13 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [authForm, setAuthForm] = useState({ email: "", password: "", name: "" });
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  const [authForm, setAuthForm] = useState({ email: "", password: "", name: "" });
 
   const headers = useMemo(
     () =>
@@ -48,13 +48,13 @@ function App() {
     [token]
   );
 
-  useEffect(() => {
-    if (pathname !== "/") return;
-    loadCategories();
-    loadEvents();
-  }, [pathname]);
+  const filtersRef = useRef({ search: "", categoryId: "", dateFrom: "", dateTo: "" });
 
-  const loadCategories = async () => {
+  useEffect(() => {
+    filtersRef.current = { search, categoryId, dateFrom, dateTo };
+  }, [search, categoryId, dateFrom, dateTo]);
+
+  const loadCategories = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/categories`);
       if (!res.ok) throw new Error("Nepavyko gauti kategorijų");
@@ -65,17 +65,21 @@ function App() {
       setError(err.message);
       setCategories([]); // keep it always iterable
     }
-  };
+  }, []);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async (overrides = {}) => {
     setLoading(true);
     setError("");
     try {
+      const { search: s, categoryId: cId, dateFrom: dFrom, dateTo: dTo } = {
+        ...filtersRef.current,
+        ...overrides,
+      };
       const params = new URLSearchParams();
-      if (search.trim()) params.set("search", search.trim());
-      if (categoryId) params.set("categoryId", categoryId);
-      if (dateFrom) params.set("dateFrom", dateFrom);
-      if (dateTo) params.set("dateTo", dateTo);
+      if ((s || "").trim()) params.set("search", (s || "").trim());
+      if (cId) params.set("categoryId", cId);
+      if (dFrom) params.set("dateFrom", dFrom);
+      if (dTo) params.set("dateTo", dTo);
 
       const res = await fetch(`${API_BASE}/api/events?${params.toString()}`);
       if (!res.ok) throw new Error("Nepavyko gauti renginių");
@@ -87,7 +91,13 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+    void loadCategories();
+    void loadEvents();
+  }, [pathname, loadCategories, loadEvents]);
 
   const login = async (email, password) => {
     setError("");
@@ -112,7 +122,6 @@ function App() {
       localStorage.setItem("token", data.token);
       setMessage("Prisijungta");
       return;
-      setMessage(mode === "register" ? "Registracija sėkminga" : "Prisijungta");
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -127,7 +136,7 @@ function App() {
       throw new Error("validation");
     }
     if (false && (!email || !password)) {
-      setError("Ž©veskite el. pa?tŽ ir slaptaóodŽ’");
+      setError("Įveskite el. paštą ir slaptažodį");
       throw new Error("validation");
     }
     try {

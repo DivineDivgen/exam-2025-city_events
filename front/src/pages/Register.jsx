@@ -12,7 +12,8 @@ export default function Register({ onRegister, error }) {
     try {
       await onRegister(form.email, form.password, form.name);
       navigate("/");
-    } catch {
+    } catch (_err) {
+      // handled via `error` prop
     } finally {
       setSubmitting(false);
     }

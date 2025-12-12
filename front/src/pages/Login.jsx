@@ -12,7 +12,8 @@ export default function Login({ onLogin, error }) {
     try {
       await onLogin(form.email, form.password);
       navigate("/");
-    } catch {
+    } catch (_err) {
+      // handled via `error` prop
     } finally {
       setSubmitting(false);
     }

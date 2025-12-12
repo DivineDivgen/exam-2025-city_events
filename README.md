@@ -31,22 +31,3 @@ kai esate pagrindiniame folderyje (root) parasykite
 
 ```
 docker compose up
-```
-
-## duomenu baze
-
-kad sugeneruoti lanteles su Prisma pirma nueikite i api folderi
-arba tesiog naudokite paprasta mySQL
-
-```
-cd api
-```
-
-ir po to panaudoti
-
-```
-npx prisma migrate dev --name init
-npx prisma generate
-```
-
-reikia naudoti `npx prisma migrate dev --name init` kekviena karta kai pakeiciat schema.prisma iš api/prismamigrations
